@@ -177,11 +177,7 @@ export function ContactForm() {
           id={ids.message}
           rows={6}
           maxLength={CONTACT_LIMITS.message}
-          placeholder={
-            emailOptional
-              ? "What worked, what didn't, what you'd change..."
-              : "A little context helps me reply properly."
-          }
+          placeholder="Hi, how are you? :)"
           className={cn(inputClass, "py-2")}
           aria-invalid={!!errors.message}
           aria-describedby={describedBy("message")}
