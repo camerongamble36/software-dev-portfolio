@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { indexForKey, indexToProgress, pointerToProgress, progressToIndex } from "@/lib/slider";
+import {
+  indexForKey,
+  indexToProgress,
+  pointerToProgress,
+  progressToIndex,
+  segmentAt,
+} from "@/lib/slider";
 
 describe("progressToIndex", () => {
   it.each([
@@ -33,6 +39,39 @@ describe("indexToProgress", () => {
 
   it("handles a single stop", () => {
     expect(indexToProgress(0, 1)).toBe(0);
+  });
+});
+
+describe("segmentAt", () => {
+  it.each([
+    [0, 0, 0],
+    [0.125, 0, 0.5],
+    [0.25, 1, 0],
+    [0.3125, 1, 0.25],
+    [0.75, 3, 0],
+    [0.875, 3, 0.5],
+  ])("progress %d -> lower stop %d, %d of the way to the next", (progress, lower, fraction) => {
+    const segment = segmentAt(progress, 5);
+    expect(segment.lower).toBe(lower);
+    expect(segment.upper).toBe(lower + 1);
+    expect(segment.fraction).toBeCloseTo(fraction);
+  });
+
+  it("treats the last stop as the end of the final segment", () => {
+    expect(segmentAt(1, 5)).toEqual({ lower: 3, upper: 4, fraction: 1 });
+  });
+
+  it("gives a full 0..1 sweep for every stop-to-stop move", () => {
+    for (let i = 0; i < 4; i++) {
+      expect(segmentAt(indexToProgress(i, 5) + 0.001, 5).fraction).toBeCloseTo(0, 1);
+      expect(segmentAt(indexToProgress(i + 1, 5) - 0.001, 5).fraction).toBeCloseTo(1, 1);
+    }
+  });
+
+  it("clamps out-of-range input and handles degenerate tracks", () => {
+    expect(segmentAt(-1, 5)).toEqual({ lower: 0, upper: 1, fraction: 0 });
+    expect(segmentAt(2, 5)).toEqual({ lower: 3, upper: 4, fraction: 1 });
+    expect(segmentAt(0.5, 1)).toEqual({ lower: 0, upper: 0, fraction: 0 });
   });
 });
 

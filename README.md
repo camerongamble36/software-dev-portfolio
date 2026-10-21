@@ -50,18 +50,22 @@ flowchart LR
 ## The audience slider
 
 The hero has a five-stop slider: _Recruiter → Hiring manager → Fellow developer → Friend or family →
-Business partner_. Drag it and a vertical divider sweeps across the hero, wiping from one audience's
-copy to the next. Release and it snaps to the nearest stop. The choice then reorders and highlights
-the case studies and persists across the site.
+Business partner_. Every move from one stop to the next sweeps a vertical divider across the full
+width of the hero, wiping from one audience's copy to the next. Drag past several stops and you get
+one full sweep per stop. Release and it snaps to the nearest stop. The choice then reorders and
+highlights the case studies and persists across the site.
 
 How it works:
 
-- One Framer Motion `motionValue` drives the thumb, and a second drives the divider and the
-  `clip-path` of the incoming copy. While you drag, the divider follows the thumb. On release, the
-  thumb springs to its stop and the wipe finishes the sweep, so there's never a half-revealed
-  resting state.
-- The stop maths (progress ↔ index, pointer → progress, key → index) is plain TypeScript in
-  `lib/slider.ts`, unit tested separately from React.
+- A single Framer Motion `motionValue` holds the thumb position. The wipe is derived from it: between
+  two adjacent stops, the divider's x is how far the thumb has travelled between them (0–100% of the
+  width). Left of the divider shows the higher stop's audience, right shows the lower one. So
+  dragging right reveals the next audience from the left, dragging left reveals it from the right,
+  and resting on a stop is never half-revealed.
+- Taps and key presses animate the thumb at a steady pace per stop, so a jump from Recruiter to
+  Business partner plays four sweeps in a row.
+- The stop maths (progress ↔ index, progress → segment and sweep fraction, pointer → progress,
+  key → index) is plain TypeScript in `lib/slider.ts`, unit tested separately from React.
 - **Accessible:** the thumb is `role="slider"` with `aria-valuenow`/`aria-valuetext`. Arrow keys,
   Home and End move between stops, and focus is visible. With `prefers-reduced-motion` the sweep is
   skipped and the content swaps instantly.

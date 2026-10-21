@@ -4,6 +4,7 @@ import {
   animate,
   motion,
   useMotionValue,
+  useMotionValueEvent,
   useReducedMotion,
   useTransform,
   type AnimationPlaybackControls,
@@ -16,13 +17,22 @@ import { useAudience } from "@/components/audience/audience-provider";
 import { GithubIcon, LinkedinIcon } from "@/components/icons";
 import { buttonVariants } from "@/components/ui/button";
 import { AUDIENCES, AUDIENCE_LABELS, type Audience } from "@/lib/audiences";
-import { indexForKey, indexToProgress, pointerToProgress, progressToIndex } from "@/lib/slider";
+import {
+  indexForKey,
+  indexToProgress,
+  pointerToProgress,
+  progressToIndex,
+  segmentAt,
+} from "@/lib/slider";
 import { cn } from "@/lib/utils";
 
 const STOPS = AUDIENCES.length;
 /** Pointer travel (px) before a press counts as a drag rather than a tap. */
 const DRAG_THRESHOLD = 4;
-const SWEEP = { duration: 0.45, ease: [0.65, 0, 0.35, 1] as const };
+/** Seconds per stop-to-stop sweep for taps and key presses, capped for long jumps. */
+const SWEEP_PER_STOP = 0.5;
+const MAX_SWEEP = 1.6;
+const SWEEP_EASE = [0.65, 0, 0.35, 1] as const;
 const SNAP = { type: "spring", stiffness: 500, damping: 40 } as const;
 
 const ACCENT_DOT: Record<Audience, string> = {
@@ -65,80 +75,90 @@ export function AudienceHero() {
   const [targetIndex, setTargetIndex] = useState<number | null>(null);
   const targetRef = useRef<number | null>(null);
   const committedRef = useRef(committedIndex);
+  // True from the start of a drag/jump until it settles on a stop.
+  const [moving, setMoving] = useState(false);
+  const movingRef = useRef(false);
 
-  // Thumb position, and the divider/wipe position (0..1 across the section).
+  // Thumb position (0..1 along the track). The wipe is derived from it: between two
+  // adjacent stops the divider crosses the full section width, so every change is
+  // one edge-to-edge sweep. Left of the divider shows the higher stop's audience.
   const progress = useMotionValue(indexToProgress(committedIndex, STOPS));
-  const reveal = useMotionValue(0);
-  // +1 when moving right (new audience shows left of the divider), -1 when moving left.
-  const direction = useMotionValue(1);
+  const [lowerStop, setLowerStop] = useState(() => segmentAt(progress.get(), STOPS).lower);
+  useMotionValueEvent(progress, "change", (p) => {
+    const { lower } = segmentAt(p, STOPS);
+    if (lower !== lowerStop) setLowerStop(lower);
+  });
 
   const thumbLeft = useTransform(progress, (p) => `${p * 100}%`);
-  const dividerLeft = useTransform(reveal, (r) => `${r * 100}%`);
-  const clipPath = useTransform(() => {
-    const r = reveal.get() * 100;
-    return direction.get() >= 0 ? `inset(0 ${100 - r}% 0 0)` : `inset(0 0 0 ${r}%)`;
-  });
+  const sweep = useTransform(progress, (p) => segmentAt(p, STOPS).fraction * 100);
+  const dividerLeft = useTransform(sweep, (s) => `${s}%`);
+  const clipPath = useTransform(sweep, (s) => `inset(0 ${100 - s}% 0 0)`);
 
   const railRef = useRef<HTMLDivElement>(null);
   const thumbRef = useRef<HTMLDivElement>(null);
   const pointer = useRef<{ id: number; startX: number; dragging: boolean } | null>(null);
-  const animations = useRef<AnimationPlaybackControls[]>([]);
+  const animation = useRef<AnimationPlaybackControls | null>(null);
   const runToken = useRef(0);
 
   // Keep the thumb on the committed stop when the audience changes from outside
   // (hydration from localStorage, another tab).
   useEffect(() => {
     committedRef.current = committedIndex;
-    if (targetRef.current === null) progress.set(indexToProgress(committedIndex, STOPS));
+    if (!movingRef.current) progress.set(indexToProgress(committedIndex, STOPS));
   }, [committedIndex, progress]);
 
   function setTarget(index: number | null) {
     targetRef.current = index;
     setTargetIndex(index);
-    if (index !== null) direction.set(index >= committedRef.current ? 1 : -1);
   }
 
-  function stopAnimations() {
+  function setIsMoving(value: boolean) {
+    movingRef.current = value;
+    setMoving(value);
+  }
+
+  function stopAnimation() {
     runToken.current += 1;
-    animations.current.forEach((a) => a.stop());
-    animations.current = [];
+    animation.current?.stop();
+    animation.current = null;
   }
 
-  function commit(index: number) {
-    committedRef.current = index;
-    setAudience(AUDIENCES[index]);
+  function settle(index: number) {
+    setIsMoving(false);
     setTarget(null);
+    if (index !== committedRef.current) {
+      committedRef.current = index;
+      setAudience(AUDIENCES[index]);
+    }
   }
 
-  /** Move to a stop: snap the thumb and finish the wipe, then commit. */
+  /** Move the thumb to a stop (sweeping once per stop crossed), then commit. */
   function goTo(index: number, { fromDrag }: { fromDrag: boolean }) {
-    stopAnimations();
+    stopAnimation();
     const stop = indexToProgress(index, STOPS);
-
-    if (index === committedRef.current) {
-      setTarget(null);
-      if (reduceMotion) progress.set(stop);
-      else animations.current = [animate(progress, stop, SNAP)];
-      return;
-    }
-
     setTarget(index);
+
     if (reduceMotion) {
       progress.set(stop);
-      commit(index);
+      settle(index);
       return;
     }
 
-    const movingRight = index > committedRef.current;
-    // A tap or key press gets a full-width sweep; a drag continues from where it is.
-    if (!fromDrag) reveal.set(movingRight ? 0 : 1);
-
+    setIsMoving(true);
+    const stopsToTravel = Math.abs(stop - progress.get()) * (STOPS - 1);
+    // A released drag springs the rest of the way; a tap or key press sweeps at a steady
+    // pace per stop so multi-stop jumps show each change in turn.
+    const transition = fromDrag
+      ? SNAP
+      : {
+          duration: Math.min(SWEEP_PER_STOP * stopsToTravel, MAX_SWEEP),
+          ease: stopsToTravel > 1 ? ("linear" as const) : SWEEP_EASE,
+        };
     const token = runToken.current;
-    const thumb = animate(progress, stop, SNAP);
-    const wipe = animate(reveal, movingRight ? 1 : 0, SWEEP);
-    animations.current = [thumb, wipe];
-    Promise.all([thumb, wipe]).then(() => {
-      if (token === runToken.current) commit(index);
+    const controls = animate(progress, stop, transition);
+    animation.current = controls;
+    controls.then(() => {
+      if (token === runToken.current) settle(index);
     });
   }
 
@@ -148,7 +168,6 @@ export function AudienceHero() {
     const rect = rail.getBoundingClientRect();
     const p = pointerToProgress(clientX, rect.left, rect.width);
     progress.set(p);
-    reveal.set(p);
     const nearest = progressToIndex(p, STOPS);
     if (nearest !== targetRef.current) setTarget(nearest);
   }
@@ -172,7 +191,8 @@ export function AudienceHero() {
     if (!state.dragging) {
       if (Math.abs(e.clientX - state.startX) < DRAG_THRESHOLD) return;
       state.dragging = true;
-      stopAnimations();
+      stopAnimation();
+      setIsMoving(true);
     }
     trackPointer(e.clientX);
   }
@@ -202,7 +222,11 @@ export function AudienceHero() {
   }
 
   const shownIndex = targetIndex ?? committedIndex;
-  const revealing = targetIndex !== null && targetIndex !== committedIndex;
+  const sweeping = moving && !reduceMotion;
+  // While sweeping, the base layer shows the lower stop and the clipped layer the upper.
+  // Otherwise the base shows the committed audience (or, with reduced motion, the
+  // stop being dragged to: an instant swap).
+  const baseAudience = sweeping ? AUDIENCES[lowerStop] : AUDIENCES[shownIndex];
 
   return (
     <section
@@ -213,16 +237,16 @@ export function AudienceHero() {
     >
       <div className="grid pt-12 sm:pt-20">
         <div className="[grid-area:1/1]">
-          <HeroCopy audience={audience} headingId="hero-heading" />
+          <HeroCopy audience={baseAudience} headingId="hero-heading" />
         </div>
-        {revealing && (
+        {sweeping && (
           <motion.div
             aria-hidden
             data-testid="audience-reveal"
             className="bg-canvas [grid-area:1/1]"
             style={{ clipPath }}
           >
-            <HeroCopy audience={AUDIENCES[targetIndex]} />
+            <HeroCopy audience={AUDIENCES[lowerStop + 1]} />
           </motion.div>
         )}
       </div>
@@ -321,14 +345,14 @@ export function AudienceHero() {
         </div>
       </div>
 
-      {/* The divider: a full-height line that tracks the wipe. Hidden when idle. */}
+      {/* The divider: a full-height line that crosses the full width once per stop. Hidden when idle. */}
       <motion.div
         aria-hidden
         data-testid="audience-divider"
-        data-active={revealing && !reduceMotion}
+        data-active={sweeping}
         className={cn(
           "pointer-events-none absolute inset-y-0 w-0.5 -translate-x-1/2 bg-brand transition-opacity duration-150",
-          revealing && !reduceMotion ? "opacity-100" : "opacity-0",
+          sweeping ? "opacity-100" : "opacity-0",
         )}
         style={{ left: dividerLeft }}
       />

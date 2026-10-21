@@ -25,7 +25,7 @@ test.beforeEach(async ({ page }) => {
   await expect(hero(page)).toHaveAttribute("data-audience", "recruiter");
 });
 
-test("dragging with the mouse sweeps the divider and changes the audience", async ({
+test("dragging sweeps the divider across the full width for each stop", async ({
   page,
   isMobile,
 }) => {
@@ -34,16 +34,22 @@ test("dragging with the mouse sweeps the divider and changes the audience", asyn
 
   await page.mouse.move(x, y);
   await page.mouse.down();
-  await page.mouse.move(x + stop * 1.2, y, { steps: 8 });
 
-  // Mid-drag: the divider is visible and has moved right, revealing the next audience.
+  // Halfway to the next stop: the divider is halfway across the hero.
+  await page.mouse.move(x + stop * 0.5, y, { steps: 6 });
   await expect(divider(page)).toHaveAttribute("data-active", "true");
-  const midDrag = await dividerLeft(page);
-  expect(midDrag).toBeGreaterThan(5);
   await expect(page.getByTestId("audience-reveal")).toBeVisible();
+  expect(await dividerLeft(page)).toBeCloseTo(50, -1);
+
+  // Nearly at the next stop: nearly the full width.
+  await page.mouse.move(x + stop * 0.95, y, { steps: 4 });
+  expect(await dividerLeft(page)).toBeGreaterThan(85);
+
+  // Past it, towards the third stop: a new sweep starts again from the left edge.
+  await page.mouse.move(x + stop * 1.2, y, { steps: 4 });
+  expect(await dividerLeft(page)).toBeLessThan(30);
 
   await page.mouse.move(x + stop * 2.1, y, { steps: 8 });
-  expect(await dividerLeft(page)).toBeGreaterThan(midDrag);
   await expect(thumb(page)).toHaveAttribute("aria-valuetext", "Fellow developer");
 
   await page.mouse.up();

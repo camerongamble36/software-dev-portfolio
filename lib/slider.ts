@@ -19,6 +19,20 @@ export function progressToIndex(progress: number, stopCount: number): number {
   return Math.round(clamp(progress, 0, 1) * (stopCount - 1));
 }
 
+/**
+ * The two adjacent stops around `progress`, and how far (0..1) it is from `lower` to `upper`.
+ * Drives the hero wipe: each stop-to-stop move is one full-width sweep.
+ */
+export function segmentAt(
+  progress: number,
+  stopCount: number,
+): { lower: number; upper: number; fraction: number } {
+  if (stopCount <= 1 || Number.isNaN(progress)) return { lower: 0, upper: 0, fraction: 0 };
+  const scaled = clamp(progress, 0, 1) * (stopCount - 1);
+  const lower = Math.min(Math.floor(scaled), stopCount - 2);
+  return { lower, upper: lower + 1, fraction: scaled - lower };
+}
+
 /** Progress (0..1) of a pointer x position over a track rectangle. */
 export function pointerToProgress(clientX: number, trackLeft: number, trackWidth: number): number {
   if (trackWidth <= 0) return 0;
