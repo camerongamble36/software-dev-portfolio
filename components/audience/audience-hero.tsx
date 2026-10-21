@@ -11,12 +11,12 @@ import {
 } from "motion/react";
 import Link from "next/link";
 import { useEffect, useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
-import { audienceContent } from "@/content/audiences";
 import { site } from "@/content/site";
 import { useAudience } from "@/components/audience/audience-provider";
 import { GithubIcon, LinkedinIcon } from "@/components/icons";
 import { buttonVariants } from "@/components/ui/button";
-import { AUDIENCES, AUDIENCE_LABELS, type Audience } from "@/lib/audiences";
+import { ACCENT_CLASSES } from "@/components/audience/audience-accents";
+import { AUDIENCES, getAudience, type Audience } from "@/lib/audiences";
 import {
   indexForKey,
   indexToProgress,
@@ -35,30 +35,21 @@ const MAX_SWEEP = 1.6;
 const SWEEP_EASE = [0.65, 0, 0.35, 1] as const;
 const SNAP = { type: "spring", stiffness: 500, damping: 40 } as const;
 
-const ACCENT_DOT: Record<Audience, string> = {
-  recruiter: "bg-brand",
-  manager: "bg-accent-blue",
-  peer: "bg-accent-teal",
-  "friend-family": "bg-accent-pink",
-  partner: "bg-accent-gold",
-};
+/** Stops sit at the centre of each label column, so the rail is inset by half a column. */
+const RAIL_INSET = `${50 / STOPS}%`;
 
-/** The hero background: the canvas tinted towards each audience's accent. */
-const HERO_BG: Record<Audience, string> = {
-  recruiter: "bg-hero-recruiter",
-  manager: "bg-hero-manager",
-  peer: "bg-hero-peer",
-  "friend-family": "bg-hero-friend-family",
-  partner: "bg-hero-partner",
-};
+/** The hero background: the canvas tinted towards the audience's accent. */
+function heroBg(audience: Audience) {
+  return ACCENT_CLASSES[getAudience(audience).accent].hero;
+}
 
 function HeroCopy({ audience, headingId }: { audience: Audience; headingId?: string }) {
-  const copy = audienceContent[audience];
+  const copy = getAudience(audience);
   return (
     <div className="mx-auto max-w-5xl px-4 sm:px-6">
       <p className="inline-flex items-center gap-2 rounded-full border border-line-subtle bg-surface px-3 py-1 text-sm text-secondary">
-        <span aria-hidden className={cn("size-2 rounded-full", ACCENT_DOT[audience])} />
-        For: {AUDIENCE_LABELS[audience]}
+        <span aria-hidden className={cn("size-2 rounded-full", ACCENT_CLASSES[copy.accent].dot)} />
+        For: {copy.label}
       </p>
       <h1
         id={headingId}
@@ -243,13 +234,13 @@ export function AudienceHero() {
       aria-labelledby="hero-heading"
       data-audience={audience}
       data-testid="audience-hero"
-      className={cn("relative overflow-hidden border-b border-line-subtle", HERO_BG[baseAudience])}
+      className={cn("relative overflow-hidden border-b border-line-subtle", heroBg(baseAudience))}
     >
       {/* The incoming audience's tint, wiped in across the whole hero behind the content. */}
       {sweeping && (
         <motion.div
           aria-hidden
-          className={cn("absolute inset-0", HERO_BG[upperAudience])}
+          className={cn("absolute inset-0", heroBg(upperAudience))}
           style={{ clipPath }}
         />
       )}
@@ -262,7 +253,7 @@ export function AudienceHero() {
           <motion.div
             aria-hidden
             data-testid="audience-reveal"
-            className={cn("[grid-area:1/1]", HERO_BG[upperAudience])}
+            className={cn("[grid-area:1/1]", heroBg(upperAudience))}
             style={{ clipPath }}
           >
             <HeroCopy audience={upperAudience} />
@@ -307,10 +298,11 @@ export function AudienceHero() {
             onPointerCancel={onPointerCancel}
           >
             <div className="relative h-11">
-              {/* Stops sit at the centres of the 5 label columns below: 10%, 30%, ... 90%. */}
+              {/* The rail is inset so each stop lines up with its label column below. */}
               <div
                 ref={railRef}
-                className="absolute inset-x-[10%] top-1/2 h-1 -translate-y-1/2 rounded-full bg-line-subtle"
+                className="absolute top-1/2 h-1 -translate-y-1/2 rounded-full bg-line-subtle"
+                style={{ left: RAIL_INSET, right: RAIL_INSET }}
               >
                 <motion.div
                   aria-hidden
@@ -336,7 +328,7 @@ export function AudienceHero() {
                   aria-valuemin={0}
                   aria-valuemax={STOPS - 1}
                   aria-valuenow={shownIndex}
-                  aria-valuetext={AUDIENCE_LABELS[AUDIENCES[shownIndex]]}
+                  aria-valuetext={getAudience(AUDIENCES[shownIndex]).label}
                   aria-orientation="horizontal"
                   data-testid="audience-thumb"
                   onKeyDown={onKeyDown}
@@ -349,7 +341,8 @@ export function AudienceHero() {
             </div>
             <div
               aria-hidden
-              className="mt-1 grid grid-cols-5 text-center text-xs leading-tight sm:text-sm"
+              className="mt-1 grid text-center text-xs leading-tight sm:text-sm"
+              style={{ gridTemplateColumns: `repeat(${STOPS}, minmax(0, 1fr))` }}
             >
               {AUDIENCES.map((a, i) => (
                 <span
@@ -359,7 +352,7 @@ export function AudienceHero() {
                     i === shownIndex ? "font-semibold text-primary" : "text-secondary",
                   )}
                 >
-                  {AUDIENCE_LABELS[a]}
+                  {getAudience(a).label}
                 </span>
               ))}
             </div>

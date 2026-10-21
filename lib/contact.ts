@@ -12,15 +12,6 @@ export const CONTACT_TOPIC_LABELS: Record<ContactTopic, string> = {
   hello: "Just saying hi",
 };
 
-/** Sensible default topic for each audience; the visitor can change it. */
-export const DEFAULT_TOPIC: Record<Audience, ContactTopic> = {
-  recruiter: "role",
-  manager: "role",
-  peer: "feedback",
-  "friend-family": "hello",
-  partner: "project",
-};
-
 export const CONTACT_LIMITS = { name: 100, email: 254, message: 3000 } as const;
 
 /**

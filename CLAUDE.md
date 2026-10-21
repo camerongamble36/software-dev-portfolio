@@ -27,8 +27,11 @@ library, no Style Dictionary/culori.
   `text-secondary`, `text-link`, ...). Tailwind's default palette is removed. Never hardcode hex in
   components. `tests/unit/contrast.test.ts` enforces WCAG AA for text pairs in both themes.
 - **Theme:** next-themes with `data-theme`; the `dark:` variant reads that attribute.
-- **Audiences:** defined once in `lib/audiences.ts` (const + Zod enum). Per-audience copy and
-  featured case studies live in `content/audiences.ts`.
+- **Audiences:** one entry each in `content/audiences.ts` (id, label, accent, contactTopic,
+  headline, intro, featured), validated by `lib/audiences.ts` at build time (2–6 entries, unique
+  kebab-case ids). Add or remove an entry; nothing else changes. Don't add per-audience `Record`
+  maps elsewhere: put the field on the entry. Accents map to classes in
+  `components/audience/audience-accents.ts` and tints in `app/globals.css` (`--hero-<accent>`).
 - **Case studies:** one typed file per study in `content/case-studies/<slug>.ts`, registered in
   `content/case-studies/index.ts`, validated by `lib/case-studies/schema.ts` at build time. The PDF
   must exist at `public/case-studies/<slug>.pdf` (a unit test fails otherwise).

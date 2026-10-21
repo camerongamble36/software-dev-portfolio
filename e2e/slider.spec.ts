@@ -11,11 +11,12 @@ async function dividerLeft(page: Page) {
 async function railGeometry(page: Page) {
   const thumbBox = (await thumb(page).boundingBox())!;
   const trackBox = (await page.getByTestId("audience-track").boundingBox())!;
-  // Stops sit at 10%..90% of the track, so one stop is 20% of its width.
+  // Each stop sits at the centre of an equal-width label column, so stops are one column apart.
+  const stops = Number(await thumb(page).getAttribute("aria-valuemax")) + 1;
   return {
     x: thumbBox.x + thumbBox.width / 2,
     y: thumbBox.y + thumbBox.height / 2,
-    stop: trackBox.width * 0.2,
+    stop: trackBox.width / stops,
   };
 }
 
@@ -66,19 +67,25 @@ test("arrow keys, Home and End move between stops", async ({ page }) => {
   await thumb(page).focus();
   await expect(thumb(page)).toBeFocused();
 
+  // Works for however many audiences are configured: read the last stop from the slider.
+  const last = Number(await thumb(page).getAttribute("aria-valuemax"));
+  const first = await hero(page).getAttribute("data-audience");
+
   await page.keyboard.press("ArrowRight");
-  await expect(hero(page)).toHaveAttribute("data-audience", "manager");
   await expect(thumb(page)).toHaveAttribute("aria-valuenow", "1");
   await expect(thumb(page)).toHaveAttribute("aria-valuetext", "Hiring manager");
+  await expect(hero(page)).toHaveAttribute("data-audience", "manager");
 
   await page.keyboard.press("End");
-  await expect(hero(page)).toHaveAttribute("data-audience", "partner");
+  await expect(thumb(page)).toHaveAttribute("aria-valuenow", String(last));
+  await expect(hero(page)).not.toHaveAttribute("data-audience", "manager");
 
   await page.keyboard.press("ArrowLeft");
-  await expect(hero(page)).toHaveAttribute("data-audience", "friend-family");
+  await expect(thumb(page)).toHaveAttribute("aria-valuenow", String(last - 1));
 
   await page.keyboard.press("Home");
-  await expect(hero(page)).toHaveAttribute("data-audience", "recruiter");
+  await expect(thumb(page)).toHaveAttribute("aria-valuenow", "0");
+  await expect(hero(page)).toHaveAttribute("data-audience", first!);
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
 });
 

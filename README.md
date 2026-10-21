@@ -83,8 +83,11 @@ How it works:
   skipped and the content swaps instantly.
 - **Touch-friendly:** pointer events with `touch-action: pan-y`, so a horizontal drag moves the
   slider while a vertical swipe still scrolls the page. The thumb is a 44px target.
-- Audiences are defined once (`lib/audiences.ts`, a const plus a Zod enum) and shared by the UI,
-  the case-study ordering, and the planned chat assistant.
+- **Audiences are data.** Each is one entry in `content/audiences.ts` (id, label, accent, default
+  contact topic, copy, featured case studies), validated by a Zod schema at build time and shared
+  by the UI, the case-study ordering, the contact form and the planned chat assistant. Adding or
+  removing an audience is a one-entry change. The slider adapts to 2–6 stops, and visitors whose
+  saved audience is removed fall back to the first one.
 
 ## How the chatbot is kept safe and cheap _(planned, phase 4)_
 

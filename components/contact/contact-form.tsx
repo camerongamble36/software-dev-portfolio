@@ -8,11 +8,11 @@ import { sendContactMessage, type ContactResult } from "@/app/contact/actions";
 import { useAudience } from "@/components/audience/audience-provider";
 import { buttonVariants } from "@/components/ui/button";
 import { site } from "@/content/site";
+import { getAudience } from "@/lib/audiences";
 import {
   CONTACT_LIMITS,
   CONTACT_TOPICS,
   CONTACT_TOPIC_LABELS,
-  DEFAULT_TOPIC,
   contactSchema,
   type ContactInput,
   type ContactOutput,
@@ -82,7 +82,7 @@ export function ContactForm() {
     formState: { errors, isSubmitting },
   } = useForm<ContactInput, unknown, ContactOutput>({
     resolver: zodResolver(contactSchema),
-    defaultValues: { topic: DEFAULT_TOPIC[audience], name: "", email: "", message: "" },
+    defaultValues: { topic: getAudience(audience).contactTopic, name: "", email: "", message: "" },
   });
 
   useEffect(() => {
@@ -91,7 +91,7 @@ export function ContactForm() {
 
   // Follow the audience chosen on the slider until the visitor picks a topic themselves.
   useEffect(() => {
-    if (!getFieldState("topic").isDirty) setValue("topic", DEFAULT_TOPIC[audience]);
+    if (!getFieldState("topic").isDirty) setValue("topic", getAudience(audience).contactTopic);
   }, [audience, getFieldState, setValue]);
 
   const topic = useWatch({ control, name: "topic" });

@@ -1,10 +1,9 @@
 "use client";
 
 import { motion } from "motion/react";
-import { audienceContent } from "@/content/audiences";
 import { useAudience } from "@/components/audience/audience-provider";
 import { CaseStudyCard } from "@/components/case-studies/case-study-card";
-import { AUDIENCE_LABELS } from "@/lib/audiences";
+import { getAudience } from "@/lib/audiences";
 import { orderCaseStudies } from "@/lib/case-studies/order";
 import type { CaseStudy } from "@/lib/case-studies/schema";
 
@@ -17,8 +16,9 @@ export function CaseStudyGrid({
   limit?: number;
 }) {
   const { audience } = useAudience();
-  const ranked = orderCaseStudies(caseStudies, audienceContent[audience].featured).slice(0, limit);
-  const badge = `Picked for: ${AUDIENCE_LABELS[audience]}`;
+  const { featured, label } = getAudience(audience);
+  const ranked = orderCaseStudies(caseStudies, featured).slice(0, limit);
+  const badge = `Picked for: ${label}`;
 
   return (
     <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

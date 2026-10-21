@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { AudienceProvider } from "@/components/audience/audience-provider";
 import { CaseStudyGrid } from "@/components/case-studies/case-study-grid";
 import { StoryToggle } from "@/components/case-studies/story-toggle";
-import { audienceContent } from "@/content/audiences";
+import { getAudience } from "@/lib/audiences";
 import { getAllCaseStudies } from "@/lib/case-studies/loader";
 
 describe("StoryToggle", () => {
@@ -34,7 +34,7 @@ describe("CaseStudyGrid", () => {
     );
 
     const cards = screen.getAllByTestId("case-study-card");
-    const expected = audienceContent.manager.featured;
+    const expected = getAudience("manager").featured;
     expect(cards.map((c) => c.dataset.slug).slice(0, expected.length)).toEqual(expected);
     expect(within(cards[0]).getByText("Picked for: Hiring manager")).toBeInTheDocument();
   });

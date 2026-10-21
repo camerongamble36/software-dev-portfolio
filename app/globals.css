@@ -34,15 +34,15 @@
   --chart-5: #f5b63b;
 
   /*
-   * Hero backgrounds per audience: the canvas tinted towards that audience's accent.
+   * Hero backgrounds per accent: the canvas tinted towards that accent colour.
    * Mixed in sRGB so tests/unit/contrast.test.ts can compute the exact colour.
    */
   --hero-tint: 7%;
-  --hero-recruiter: color-mix(in srgb, var(--chart-1) var(--hero-tint), var(--surface-canvas));
-  --hero-manager: color-mix(in srgb, var(--chart-2) var(--hero-tint), var(--surface-canvas));
-  --hero-peer: color-mix(in srgb, var(--chart-3) var(--hero-tint), var(--surface-canvas));
-  --hero-friend-family: color-mix(in srgb, var(--chart-4) var(--hero-tint), var(--surface-canvas));
-  --hero-partner: color-mix(in srgb, var(--chart-5) var(--hero-tint), var(--surface-canvas));
+  --hero-violet: color-mix(in srgb, var(--chart-1) var(--hero-tint), var(--surface-canvas));
+  --hero-blue: color-mix(in srgb, var(--chart-2) var(--hero-tint), var(--surface-canvas));
+  --hero-teal: color-mix(in srgb, var(--chart-3) var(--hero-tint), var(--surface-canvas));
+  --hero-pink: color-mix(in srgb, var(--chart-4) var(--hero-tint), var(--surface-canvas));
+  --hero-gold: color-mix(in srgb, var(--chart-5) var(--hero-tint), var(--surface-canvas));
 }
 
 :root[data-theme="dark"] {
@@ -91,11 +91,11 @@
   --color-accent-teal: var(--chart-3);
   --color-accent-pink: var(--chart-4);
   --color-accent-gold: var(--chart-5);
-  --color-hero-recruiter: var(--hero-recruiter);
-  --color-hero-manager: var(--hero-manager);
-  --color-hero-peer: var(--hero-peer);
-  --color-hero-friend-family: var(--hero-friend-family);
-  --color-hero-partner: var(--hero-partner);
+  --color-hero-violet: var(--hero-violet);
+  --color-hero-blue: var(--hero-blue);
+  --color-hero-teal: var(--hero-teal);
+  --color-hero-pink: var(--hero-pink);
+  --color-hero-gold: var(--hero-gold);
 
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);

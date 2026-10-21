@@ -1,9 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { sendContactMessage } from "@/app/contact/actions";
-import { AUDIENCES } from "@/lib/audiences";
 import {
   CONTACT_TOPICS,
-  DEFAULT_TOPIC,
   MIN_FILL_MS,
   contactSchema,
   formatContactEmail,
@@ -38,8 +36,8 @@ describe("contactSchema", () => {
     expect(contactSchema.safeParse({ ...valid, ...override }).success).toBe(false);
   });
 
-  it("gives every audience a valid default topic", () => {
-    for (const audience of AUDIENCES) expect(CONTACT_TOPICS).toContain(DEFAULT_TOPIC[audience]);
+  it("lists the topics in dropdown order", () => {
+    expect(CONTACT_TOPICS).toEqual(["role", "project", "feedback", "hello"]);
   });
 });
 
