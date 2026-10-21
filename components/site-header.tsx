@@ -2,7 +2,7 @@ import Link from "next/link";
 import { site } from "@/content/site";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { buttonVariants } from "@/components/ui/button";
-import { GithubIcon } from "@/components/icons";
+import { GithubIcon, LinkedinIcon } from "@/components/icons";
 import { cn } from "@/lib/utils";
 
 export function SiteHeader() {
@@ -34,6 +34,19 @@ export function SiteHeader() {
           >
             <GithubIcon />
           </a>
+          {site.linkedinUrl && (
+            // No room at phone widths; the hero and footer carry the link there.
+            <a
+              href={site.linkedinUrl}
+              aria-label="LinkedIn profile"
+              className={cn(
+                buttonVariants({ variant: "ghost", size: "icon" }),
+                "hidden sm:inline-flex",
+              )}
+            >
+              <LinkedinIcon />
+            </a>
+          )}
           <ThemeToggle />
         </nav>
       </div>
