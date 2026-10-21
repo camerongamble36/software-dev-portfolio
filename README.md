@@ -1,36 +1,117 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# software-dev-portfolio
 
-## Getting Started
+My developer portfolio: case studies of things I've built, written so a recruiter, a hiring manager,
+a fellow developer, a friend, or a potential business partner can each get what they need quickly.
 
-First, run the development server:
+The source is public on purpose. How a site is built says as much as what it says.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+> **Status:** the site shell, audience slider and case-study pages are live with **placeholder**
+> content. Real case studies and the optional AI chat assistant are the next phases.
+
+## What's here
+
+| Route                  | What it does                                                                                                 |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `/`                    | Hero with the audience slider, featured case studies, links out                                              |
+| `/case-studies`        | Card grid, ordered and highlighted for the selected audience                                                 |
+| `/case-studies/[slug]` | Problem, role, approach, stack and outcome, a "30-second / full story" toggle, and a PDF download            |
+| `/chat`                | _(planned)_ An optional assistant that answers only from the public content. The site works fully without it |
+
+## Architecture
+
+```mermaid
+flowchart LR
+  subgraph content["content/ (typed, public)"]
+    CS["case-studies/&lt;slug&gt;.ts"]
+    AUD["audiences.ts"]
+  end
+  subgraph lib["lib/"]
+    SCHEMA["Zod schemas"]
+    LOADER["case-study loader"]
+    AUDS["audience enum"]
+  end
+  CS --> SCHEMA --> LOADER
+  AUDS --> SCHEMA
+  LOADER --> PAGES["App Router pages (static prerender)"]
+  AUD --> HERO["Audience slider (client)"]
+  HERO -- "context + localStorage" --> GRID["Case-study grid ordering"]
+  PAGES --> PDF["public/case-studies/&lt;slug&gt;.pdf"]
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- **Next.js App Router** with Cache Components. Every page is prerendered at build time.
+- **Content as code.** Each case study is a typed file validated by a Zod schema when the app
+  builds, so a typo in content fails the build instead of shipping. A unit test also checks every
+  case study's PDF exists.
+- **Design tokens.** Colours come from my Canvas design system as CSS variables, mapped to semantic
+  Tailwind names (`bg-surface`, `text-secondary`, ...). The default Tailwind palette is removed, so
+  components can't use raw colours. A unit test checks WCAG AA contrast for text in both themes.
+- **Light and dark** via `next-themes`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## The audience slider
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+The hero has a five-stop slider: _Recruiter → Hiring manager → Fellow developer → Friend or family →
+Business partner_. Drag it and a vertical divider sweeps across the hero, wiping from one audience's
+copy to the next. Release and it snaps to the nearest stop. The choice then reorders and highlights
+the case studies and persists across the site.
 
-## Learn More
+How it works:
 
-To learn more about Next.js, take a look at the following resources:
+- One Framer Motion `motionValue` drives the thumb, and a second drives the divider and the
+  `clip-path` of the incoming copy. While you drag, the divider follows the thumb. On release, the
+  thumb springs to its stop and the wipe finishes the sweep, so there's never a half-revealed
+  resting state.
+- The stop maths (progress ↔ index, pointer → progress, key → index) is plain TypeScript in
+  `lib/slider.ts`, unit tested separately from React.
+- **Accessible:** the thumb is `role="slider"` with `aria-valuenow`/`aria-valuetext`. Arrow keys,
+  Home and End move between stops, and focus is visible. With `prefers-reduced-motion` the sweep is
+  skipped and the content swaps instantly.
+- **Touch-friendly:** pointer events with `touch-action: pan-y`, so a horizontal drag moves the
+  slider while a vertical swipe still scrolls the page. The thumb is a 44px target.
+- Audiences are defined once (`lib/audiences.ts`, a const plus a Zod enum) and shared by the UI,
+  the case-study ordering, and the planned chat assistant.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## How the chatbot is kept safe and cheap _(planned, phase 4)_
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+The chat assistant is optional and isolated (`components/chat/`, `app/api/chat/`). The design
+assumes the model can be tricked, so there's nothing harmful to gain and spending is capped:
 
-## Deploy on Vercel
+- **Nothing private to leak.** It only knows `content/public/` (bio, case studies, FAQ), all
+  written for public reading. It has no tools and no access to other repos, files, email or memory.
+  The system prompt is in this repo and holds no secrets.
+- **Narrow scope.** It answers about my work, skills and availability, declines everything else,
+  says "I don't know" rather than guessing, and never claims to be human.
+- **Cost caps.** Suggested-question chips return canned answers with zero API calls. Free-text
+  questions get Zod-enforced input limits, truncated history and a small `max_tokens`. Upstash Redis
+  rate-limits per visitor and enforces a global daily budget. On top of that, the API key lives in a
+  separate Anthropic workspace with a hard monthly spend limit.
+- **Locked down.** Same-origin check on the endpoint, plain-text rendering (no raw HTML), and no
+  long-term storage of messages or IPs.
+- **Tested adversarially.** A Promptfoo eval suite covers prompt injection, jailbreak role-play,
+  requests for private data, off-topic requests and hallucination probes.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Running it
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Requires Node 22+.
+
+```bash
+npm install
+npm run dev            # http://localhost:3000
+```
+
+## Tests
+
+```bash
+npm run lint           # ESLint
+npm run typecheck      # route types + tsc
+npm test               # Vitest: schemas, slider maths, loader, PDF presence, colour contrast, components
+npm run e2e            # Playwright: builds and serves the site, then runs desktop + mobile suites
+E2E_BASE_URL=https://<preview-url> npm run e2e   # same suite against a deployed site
+```
+
+The Playwright suite drags the slider with a mouse and asserts the divider moves. It also covers
+keyboard navigation, touch drag on an emulated phone, reduced motion, every case-study page and its
+PDF, the theme toggle, and horizontal overflow at 360px.
+
+CI (GitHub Actions) runs lint, format check, typecheck and unit tests, then Playwright against a
+local production build. A second workflow runs Playwright against each successful Vercel preview
+deployment.

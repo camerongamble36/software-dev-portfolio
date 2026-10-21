@@ -1,0 +1,35 @@
+name: E2E against Vercel preview
+
+# Vercel's GitHub integration reports each deployment back to GitHub.
+# When one succeeds, run the Playwright suite against its URL.
+on:
+  deployment_status:
+
+permissions:
+  contents: read
+
+jobs:
+  e2e-preview:
+    if: github.event.deployment_status.state == 'success'
+    runs-on: ubuntu-latest
+    env:
+      E2E_BASE_URL: ${{ github.event.deployment_status.environment_url }}
+      # Only needed if Vercel Deployment Protection is on for previews.
+      VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.deployment.sha }}
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run e2e
+      - uses: actions/upload-artifact@v7
+        if: failure()
+        with:
+          name: playwright-report-preview
+          path: playwright-report
+          retention-days: 7
