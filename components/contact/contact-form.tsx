@@ -16,8 +16,16 @@ import {
   contactSchema,
   type ContactInput,
   type ContactOutput,
+  type ContactTopic,
 } from "@/lib/contact";
 import { cn } from "@/lib/utils";
+
+const MESSAGE_PLACEHOLDERS: Record<ContactTopic, string> = {
+  role: "A little context helps me reply properly.",
+  project: "A little context helps me reply properly.",
+  feedback: "What worked, what didn't, what you'd change...",
+  hello: "Hi, how are you? :)",
+};
 
 const inputClass =
   "w-full rounded-lg border border-line bg-surface px-3 text-primary placeholder:text-secondary aria-invalid:border-brand";
@@ -86,7 +94,8 @@ export function ContactForm() {
     if (!getFieldState("topic").isDirty) setValue("topic", DEFAULT_TOPIC[audience]);
   }, [audience, getFieldState, setValue]);
 
-  const emailOptional = useWatch({ control, name: "topic" }) === "feedback";
+  const topic = useWatch({ control, name: "topic" });
+  const emailOptional = topic === "feedback";
 
   async function onSubmit(form: ContactOutput) {
     const response = await sendContactMessage({
@@ -177,7 +186,7 @@ export function ContactForm() {
           id={ids.message}
           rows={6}
           maxLength={CONTACT_LIMITS.message}
-          placeholder="Hi, how are you? :)"
+          placeholder={MESSAGE_PLACEHOLDERS[topic] ?? MESSAGE_PLACEHOLDERS.role}
           className={cn(inputClass, "py-2")}
           aria-invalid={!!errors.message}
           aria-describedby={describedBy("message")}

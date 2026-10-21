@@ -19,6 +19,17 @@ test("defaults the topic from the audience picked on the slider", async ({ page 
   await expect(page.getByLabel("What's this about?")).toHaveValue("project");
 });
 
+test("the message placeholder follows the topic", async ({ page }) => {
+  const topic = page.getByLabel("What's this about?");
+  const message = page.getByLabel("Message");
+  await topic.selectOption("hello");
+  await expect(message).toHaveAttribute("placeholder", "Hi, how are you? :)");
+  await topic.selectOption("role");
+  await expect(message).toHaveAttribute("placeholder", "A little context helps me reply properly.");
+  await topic.selectOption("feedback");
+  await expect(message).toHaveAttribute("placeholder", /What worked/);
+});
+
 test("sends anonymous site feedback", async ({ page }) => {
   test.skip(!!process.env.E2E_BASE_URL, "would send a real email on a deployed site");
   await page.getByLabel("What's this about?").selectOption("feedback");
