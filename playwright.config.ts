@@ -30,5 +30,7 @@ export default defineConfig({
         url: baseURL,
         reuseExistingServer: !process.env.CI,
         timeout: 180_000,
+        // The contact form logs instead of emailing during tests.
+        env: { CONTACT_DELIVERY: "log" },
       },
 });

@@ -1,3 +1,4 @@
+import { Mail } from "lucide-react";
 import Link from "next/link";
 import { site } from "@/content/site";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -22,6 +23,20 @@ export function SiteHeader() {
           >
             Case studies
           </Link>
+          {/* A mail icon at phone widths, where the header has no room for the word. */}
+          <Link
+            href="/contact"
+            aria-label="Contact"
+            className={cn(buttonVariants({ variant: "ghost", size: "icon" }), "sm:hidden")}
+          >
+            <Mail aria-hidden />
+          </Link>
+          <Link
+            href="/contact"
+            className={cn(buttonVariants({ variant: "ghost" }), "hidden sm:inline-flex")}
+          >
+            Contact
+          </Link>
           {site.chatEnabled && (
             <Link href="/chat" className={buttonVariants({ variant: "ghost" })}>
               Chat
@@ -30,7 +45,11 @@ export function SiteHeader() {
           <a
             href={site.githubUrl}
             aria-label="GitHub profile"
-            className={buttonVariants({ variant: "ghost", size: "icon" })}
+            // Hidden at phone widths to make room; the hero and footer link to GitHub.
+            className={cn(
+              buttonVariants({ variant: "ghost", size: "icon" }),
+              "hidden sm:inline-flex",
+            )}
           >
             <GithubIcon />
           </a>

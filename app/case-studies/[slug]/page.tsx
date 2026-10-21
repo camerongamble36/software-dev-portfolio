@@ -7,6 +7,7 @@ import { Tag } from "@/components/case-studies/case-study-card";
 import { StoryToggle } from "@/components/case-studies/story-toggle";
 import { buttonVariants } from "@/components/ui/button";
 import { getAllCaseStudies, getCaseStudy } from "@/lib/case-studies/loader";
+import { cn } from "@/lib/utils";
 
 export function generateStaticParams() {
   return getAllCaseStudies().map((cs) => ({ slug: cs.slug }));
@@ -115,6 +116,13 @@ async function CaseStudyDetail({ params }: { params: Promise<{ slug: string }> }
           }
         />
       </div>
+
+      <aside className="mt-12 rounded-xl border border-line-subtle bg-surface p-5">
+        <p className="font-medium">Want to talk about this project, or something like it?</p>
+        <Link href="/contact" className={cn(buttonVariants({ variant: "outline" }), "mt-3")}>
+          Get in touch
+        </Link>
+      </aside>
     </>
   );
 }

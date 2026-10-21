@@ -15,6 +15,7 @@ The source is public on purpose. How a site is built says as much as what it say
 | `/`                    | Hero with the audience slider, featured case studies, links out                                              |
 | `/case-studies`        | Card grid, ordered and highlighted for the selected audience                                                 |
 | `/case-studies/[slug]` | Problem, role, approach, stack and outcome, a "30-second / full story" toggle, and a PDF download            |
+| `/contact`             | Contact form: a role, a project, or anonymous feedback on the site                                           |
 | `/chat`                | _(planned)_ An optional assistant that answers only from the public content. The site works fully without it |
 
 ## Architecture
@@ -44,8 +45,19 @@ flowchart LR
   case study's PDF exists.
 - **Design tokens.** Colours come from my Canvas design system as CSS variables, mapped to semantic
   Tailwind names (`bg-surface`, `text-secondary`, ...). The default Tailwind palette is removed, so
-  components can't use raw colours. A unit test checks WCAG AA contrast for text in both themes.
+  components can't use raw colours. A unit test checks WCAG AA contrast for text in both themes,
+  including on each audience's tinted hero background (the canvas mixed towards that audience's
+  accent with CSS `color-mix`).
 - **Light and dark** via `next-themes`.
+- **Page transitions** are pure CSS keyframes on Next.js `template.tsx` files: a soft fade-and-rise
+  between top-level pages, and a short slide-in when opening a case study. There's no JavaScript
+  involved, content is never hidden waiting for hydration, and they're off under
+  `prefers-reduced-motion`.
+- **Contact form.** react-hook-form with the same Zod schema on the client and in a Server Action,
+  which re-validates everything. Messages go out as plain text through Resend's REST API, with the
+  destination address and key in env vars (not in this repo). Spam control is a honeypot field plus a
+  minimum fill time; bots get a convincing "sent" and nothing is delivered. Site feedback can be
+  anonymous.
 
 ## The audience slider
 

@@ -54,7 +54,7 @@ test("theme toggle switches and remembers the theme", async ({ page }) => {
   await expect(html).toHaveAttribute("data-theme", "dark");
 });
 
-for (const path of ["/", "/case-studies", "/case-studies/placeholder-alpha"]) {
+for (const path of ["/", "/case-studies", "/case-studies/placeholder-alpha", "/contact"]) {
   test(`no horizontal overflow at 360px: ${path}`, async ({ page }) => {
     await page.setViewportSize({ width: 360, height: 780 });
     await page.goto(path);
