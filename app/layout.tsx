@@ -39,7 +39,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="flex min-h-full flex-col font-sans">
         <Providers>
           <SiteHeader />
-          <main className="flex-1">{children}</main>
+          {/* clip, not hidden: stops page-enter slides causing a sideways scrollbar. */}
+          <main className="flex-1 overflow-x-clip">{children}</main>
           <SiteFooter />
         </Providers>
       </body>

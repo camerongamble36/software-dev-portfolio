@@ -27,10 +27,22 @@
   --action-primary-hover: #6302be;
   --action-primary-active: #500e9a;
 
+  --chart-1: #870fff;
   --chart-2: #0074c8;
   --chart-3: #006965;
   --chart-4: #ae338e;
   --chart-5: #f5b63b;
+
+  /*
+   * Hero backgrounds per audience: the canvas tinted towards that audience's accent.
+   * Mixed in sRGB so tests/unit/contrast.test.ts can compute the exact colour.
+   */
+  --hero-tint: 7%;
+  --hero-recruiter: color-mix(in srgb, var(--chart-1) var(--hero-tint), var(--surface-canvas));
+  --hero-manager: color-mix(in srgb, var(--chart-2) var(--hero-tint), var(--surface-canvas));
+  --hero-peer: color-mix(in srgb, var(--chart-3) var(--hero-tint), var(--surface-canvas));
+  --hero-friend-family: color-mix(in srgb, var(--chart-4) var(--hero-tint), var(--surface-canvas));
+  --hero-partner: color-mix(in srgb, var(--chart-5) var(--hero-tint), var(--surface-canvas));
 }
 
 :root[data-theme="dark"] {
@@ -51,6 +63,9 @@
   --action-primary: #870fff;
   --action-primary-hover: #7502df;
   --action-primary-active: #6302be;
+
+  /* The dark canvas needs a stronger mix for the tint to read. */
+  --hero-tint: 14%;
 
   color-scheme: dark;
 }
@@ -76,9 +91,32 @@
   --color-accent-teal: var(--chart-3);
   --color-accent-pink: var(--chart-4);
   --color-accent-gold: var(--chart-5);
+  --color-hero-recruiter: var(--hero-recruiter);
+  --color-hero-manager: var(--hero-manager);
+  --color-hero-peer: var(--hero-peer);
+  --color-hero-friend-family: var(--hero-friend-family);
+  --color-hero-partner: var(--hero-partner);
 
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  /* Page transitions (see app/template.tsx and app/case-studies/[slug]/template.tsx). */
+  --animate-page-enter: page-enter 300ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  --animate-detail-enter: detail-enter 360ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+
+  @keyframes page-enter {
+    from {
+      opacity: 0;
+      translate: 0 8px;
+    }
+  }
+
+  @keyframes detail-enter {
+    from {
+      opacity: 0;
+      translate: 16px 0;
+    }
+  }
 }
 
 /*

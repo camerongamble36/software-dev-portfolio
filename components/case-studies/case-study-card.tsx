@@ -28,7 +28,7 @@ export function CaseStudyCard({
       data-testid="case-study-card"
       data-slug={caseStudy.slug}
       className={cn(
-        "relative flex h-full flex-col rounded-xl border bg-surface p-5 transition-colors hover:border-line",
+        "relative flex h-full flex-col rounded-xl border bg-surface p-5 transition-[border-color,translate,box-shadow] duration-200 hover:-translate-y-0.5 hover:border-line hover:shadow-md motion-reduce:hover:translate-y-0",
         highlight ? "border-brand" : "border-line-subtle",
       )}
     >

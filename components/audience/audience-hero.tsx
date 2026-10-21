@@ -43,6 +43,15 @@ const ACCENT_DOT: Record<Audience, string> = {
   partner: "bg-accent-gold",
 };
 
+/** The hero background: the canvas tinted towards each audience's accent. */
+const HERO_BG: Record<Audience, string> = {
+  recruiter: "bg-hero-recruiter",
+  manager: "bg-hero-manager",
+  peer: "bg-hero-peer",
+  "friend-family": "bg-hero-friend-family",
+  partner: "bg-hero-partner",
+};
+
 function HeroCopy({ audience, headingId }: { audience: Audience; headingId?: string }) {
   const copy = audienceContent[audience];
   return (
@@ -227,15 +236,25 @@ export function AudienceHero() {
   // Otherwise the base shows the committed audience (or, with reduced motion, the
   // stop being dragged to: an instant swap).
   const baseAudience = sweeping ? AUDIENCES[lowerStop] : AUDIENCES[shownIndex];
+  const upperAudience = AUDIENCES[lowerStop + 1];
 
   return (
     <section
       aria-labelledby="hero-heading"
       data-audience={audience}
       data-testid="audience-hero"
-      className="relative overflow-hidden border-b border-line-subtle"
+      className={cn("relative overflow-hidden border-b border-line-subtle", HERO_BG[baseAudience])}
     >
-      <div className="grid pt-12 sm:pt-20">
+      {/* The incoming audience's tint, wiped in across the whole hero behind the content. */}
+      {sweeping && (
+        <motion.div
+          aria-hidden
+          className={cn("absolute inset-0", HERO_BG[upperAudience])}
+          style={{ clipPath }}
+        />
+      )}
+
+      <div className="relative grid pt-12 sm:pt-20">
         <div className="[grid-area:1/1]">
           <HeroCopy audience={baseAudience} headingId="hero-heading" />
         </div>
@@ -243,18 +262,21 @@ export function AudienceHero() {
           <motion.div
             aria-hidden
             data-testid="audience-reveal"
-            className="bg-canvas [grid-area:1/1]"
+            className={cn("[grid-area:1/1]", HERO_BG[upperAudience])}
             style={{ clipPath }}
           >
-            <HeroCopy audience={AUDIENCES[lowerStop + 1]} />
+            <HeroCopy audience={upperAudience} />
           </motion.div>
         )}
       </div>
 
-      <div className="mx-auto max-w-5xl px-4 pb-10 sm:px-6 sm:pb-14">
+      <div className="relative mx-auto max-w-5xl px-4 pb-10 sm:px-6 sm:pb-14">
         <div className="mt-6 flex flex-wrap gap-2">
           <Link href="/case-studies" className={buttonVariants()}>
             See case studies
+          </Link>
+          <Link href="/contact" className={buttonVariants({ variant: "outline" })}>
+            Get in touch
           </Link>
           <a href={site.githubUrl} className={buttonVariants({ variant: "outline" })}>
             <GithubIcon /> GitHub

@@ -44,11 +44,60 @@ const pairs: [string, string][] = [
   ["text-on-primary", "action-primary-hover"],
 ];
 
+/** Hero tint percentage for a theme block, e.g. `--hero-tint: 7%`. */
+function heroTint(selector: string): number | undefined {
+  const start = css.indexOf(`${selector} {`);
+  const block = css.slice(start, css.indexOf("}", start));
+  const match = block.match(/--hero-tint:\s*(\d+(?:\.\d+)?)%/);
+  return match ? Number(match[1]) / 100 : undefined;
+}
+
+/** Same as CSS `color-mix(in srgb, accent <amount>, base)`. */
+function mix(accent: string, base: string, amount: number): string {
+  return (
+    "#" +
+    [1, 3, 5]
+      .map((i) => {
+        const a = parseInt(accent.slice(i, i + 2), 16);
+        const b = parseInt(base.slice(i, i + 2), 16);
+        return Math.round(a * amount + b * (1 - amount))
+          .toString(16)
+          .padStart(2, "0");
+      })
+      .join("")
+  );
+}
+
+const heroAccents = ["chart-1", "chart-2", "chart-3", "chart-4", "chart-5"];
+
+function withHeroTints(theme: Record<string, string>, tint: number | undefined) {
+  if (tint === undefined) throw new Error("missing --hero-tint");
+  return {
+    ...theme,
+    ...Object.fromEntries(
+      heroAccents.map((accent) => [
+        `hero-${accent}`,
+        mix(theme[accent], theme["surface-canvas"], tint),
+      ]),
+    ),
+  };
+}
+
+const lightTint = heroTint(":root");
+const lightWithHero = withHeroTints(light, lightTint);
+const darkWithHero = withHeroTints(dark, heroTint(':root[data-theme="dark"]') ?? lightTint);
+
+// Hero copy sits directly on the tinted backgrounds.
+const heroPairs: [string, string][] = heroAccents.flatMap((accent) => [
+  ["text-primary", `hero-${accent}`],
+  ["text-secondary", `hero-${accent}`],
+]);
+
 describe.each([
-  ["light", light],
-  ["dark", dark],
+  ["light", lightWithHero],
+  ["dark", darkWithHero],
 ])("%s theme contrast", (_, theme) => {
-  it.each(pairs)("%s on %s meets WCAG AA (4.5:1)", (fg, bg) => {
+  it.each([...pairs, ...heroPairs])("%s on %s meets WCAG AA (4.5:1)", (fg, bg) => {
     expect(theme[fg], `missing token ${fg}`).toBeDefined();
     expect(theme[bg], `missing token ${bg}`).toBeDefined();
     expect(contrast(theme[fg], theme[bg])).toBeGreaterThanOrEqual(4.5);
