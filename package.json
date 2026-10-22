@@ -12,7 +12,10 @@
     "test:watch": "vitest",
     "e2e": "playwright test",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "predev": "node scripts/sync-content.mjs",
+    "prebuild": "node scripts/sync-content.mjs",
+    "sync-content": "node scripts/sync-content.mjs"
   },
   "dependencies": {
     "class-variance-authority": "^0.7.1",

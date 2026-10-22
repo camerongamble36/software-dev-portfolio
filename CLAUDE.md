@@ -32,9 +32,17 @@ library, no Style Dictionary/culori.
   kebab-case ids). Add or remove an entry; nothing else changes. Don't add per-audience `Record`
   maps elsewhere: put the field on the entry. Accents map to classes in
   `components/audience/audience-accents.ts` and tints in `app/globals.css` (`--hero-<accent>`).
-- **Case studies:** one typed file per study in `content/case-studies/<slug>.ts`, registered in
-  `content/case-studies/index.ts`, validated by `lib/case-studies/schema.ts` at build time. The PDF
-  must exist at `public/case-studies/<slug>.pdf` (a unit test fails otherwise).
+- **Content source:** production content is edited in Canvas and pulled at build time
+  (`docs/content-source.md`). The files in `content/` are the **local fixtures** used by dev,
+  tests, CI and e2e. App code imports content only via `@content-source`, never directly.
+  `public/case-studies/` is build output (`scripts/sync-content.mjs`); don't commit PDFs there.
+- **Case studies (fixtures):** one typed file per study in `content/case-studies/<slug>.ts`,
+  registered in `content/case-studies/index.ts`, validated by `lib/case-studies/schema.ts` at build
+  time. Its fixture PDF lives at `content/case-studies/pdfs/<slug>.pdf` (a unit test fails
+  otherwise).
+- **Contract:** changing the case-study, audience or snapshot schemas changes
+  `contract/portfolio-snapshot.schema.json`. Regenerate it (`UPDATE_CONTRACT=1 npm test`) and
+  remind Cam to copy it into Canvas web-api (`src/v1/portfolio/contract/`).
 - **Placeholders** must be labelled (`placeholder: true` and "Placeholder" in the title). Do not
   invent real case studies; they're planned with Cam.
 - **Chat (phase 4)** stays isolated in `components/chat/` and `app/api/chat/`; nothing else imports

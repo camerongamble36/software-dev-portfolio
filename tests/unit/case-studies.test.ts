@@ -57,12 +57,12 @@ describe("case-study loader", () => {
     expect(() => parseCaseStudies([{ ...valid, slug: "" }])).toThrow(/Invalid case-study content/);
   });
 
-  it.each(getAllCaseStudies().map((cs) => [cs.slug, cs.pdf]))(
-    "%s has its PDF in public/",
-    (_, pdf) => {
-      expect(existsSync(path.join(process.cwd(), "public", pdf))).toBe(true);
-    },
-  );
+  // The committed fixtures; the sync script copies them into public/ before dev and build.
+  it.each(getAllCaseStudies().map((cs) => [cs.slug]))("%s has a fixture PDF", (slug) => {
+    expect(existsSync(path.join(process.cwd(), "content/case-studies/pdfs", `${slug}.pdf`))).toBe(
+      true,
+    );
+  });
 
   it("labels placeholder content as such", () => {
     for (const cs of getAllCaseStudies().filter((c) => c.placeholder)) {

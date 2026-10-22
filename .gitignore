@@ -49,3 +49,7 @@ next-env.d.ts
 
 # promptfoo
 .promptfoo/
+
+# content sync output (scripts/sync-content.mjs)
+/public/case-studies/
+/content/generated/

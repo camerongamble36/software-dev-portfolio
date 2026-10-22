@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { rawCaseStudies } from "@/content/case-studies";
+import contentSource from "@content-source";
 import { caseStudySchema, type CaseStudy } from "./schema";
 
 const caseStudyListSchema = z.array(caseStudySchema).superRefine((list, ctx) => {
@@ -22,7 +22,7 @@ export function parseCaseStudies(raw: unknown): CaseStudy[] {
 }
 
 // Parsed once at module load: any page that imports this validates content at build time.
-const caseStudies = parseCaseStudies(rawCaseStudies);
+const caseStudies = parseCaseStudies(contentSource.caseStudies);
 
 export function getAllCaseStudies(): CaseStudy[] {
   return caseStudies;

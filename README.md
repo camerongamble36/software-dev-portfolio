@@ -36,10 +36,13 @@ flowchart LR
   LOADER --> PAGES["App Router pages (static prerender)"]
   AUD --> HERO["Audience slider (client)"]
   HERO -- "context + localStorage" --> GRID["Case-study grid ordering"]
-  PAGES --> PDF["public/case-studies/&lt;slug&gt;.pdf"]
+  PAGES --> PDF["case-study PDFs (copied in at build)"]
 ```
 
 - **Next.js App Router** with Cache Components. Every page is prerendered at build time.
+- **Content from Canvas.** Case studies and audiences are edited in my private Canvas platform
+  and pulled in at build time through a versioned, schema-checked contract. Bad content fails the
+  build instead of shipping. See [docs/content-source.md](docs/content-source.md).
 - **Content as code.** Each case study is a typed file validated by a Zod schema when the app
   builds, so a typo in content fails the build instead of shipping. A unit test also checks every
   case study's PDF exists.

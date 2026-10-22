@@ -19,7 +19,8 @@
       }
     ],
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./*"],
+      "@content-source": ["./content/local.ts"]
     }
   },
   "include": [

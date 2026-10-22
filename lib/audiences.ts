@@ -1,9 +1,9 @@
 import { z } from "zod";
-import { audienceEntries } from "@/content/audiences";
+import contentSource from "@content-source";
 import { CONTACT_TOPICS } from "@/lib/contact";
 
 /**
- * Audiences are data (content/audiences.ts), validated here once at build time and shared by
+ * Audiences are data (content/audiences.ts, or Canvas: see next.config.ts), validated here once at build time and shared by
  * the UI, case-study ordering, the contact form and (later) the chatbot persona.
  * Kept JSON-shaped so the same schema can validate audiences from another source later.
  */
@@ -54,7 +54,7 @@ export function parseAudienceDefinitions(raw: unknown): AudienceDefinition[] {
   return result.data;
 }
 
-const definitions = parseAudienceDefinitions(audienceEntries);
+const definitions = parseAudienceDefinitions(contentSource.audiences);
 const byId = new Map(definitions.map((a) => [a.id, a]));
 
 /** An audience id. A plain string, since audiences are data that can change. */
