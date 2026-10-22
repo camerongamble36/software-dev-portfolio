@@ -16,11 +16,8 @@ export const publishedSnapshotSchema = z
     publishedAt: z.iso.datetime(),
     caseStudies: z.array(caseStudySchema),
     audiences: z.array(audienceDefinitionSchema).min(MIN_AUDIENCES).max(MAX_AUDIENCES),
-    /** Where the build downloads each case study's PDF, and its expected sha256. */
-    pdfs: z.record(
-      slug,
-      z.object({ url: z.url(), sha256: z.string().regex(/^[a-f0-9]{64}$/) }).strict(),
-    ),
+    /** Each case study's PDF, by slug: the build downloads it from Canvas and checks this hash. */
+    pdfs: z.record(slug, z.object({ sha256: z.string().regex(/^[a-f0-9]{64}$/) }).strict()),
   })
   .strict();
 

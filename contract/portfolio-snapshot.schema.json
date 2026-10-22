@@ -174,17 +174,12 @@
       "additionalProperties": {
         "type": "object",
         "properties": {
-          "url": {
-            "type": "string",
-            "format": "uri"
-          },
           "sha256": {
             "type": "string",
             "pattern": "^[a-f0-9]{64}$"
           }
         },
         "required": [
-          "url",
           "sha256"
         ],
         "additionalProperties": false

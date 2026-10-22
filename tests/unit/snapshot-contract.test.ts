@@ -21,10 +21,7 @@ describe("published snapshot contract", () => {
 
   it("accepts a snapshot built from today's content", () => {
     const pdfs = Object.fromEntries(
-      getAllCaseStudies().map((cs) => [
-        cs.slug,
-        { url: `https://storage.example/${cs.slug}.pdf`, sha256: "a".repeat(64) },
-      ]),
+      getAllCaseStudies().map((cs) => [cs.slug, { sha256: "a".repeat(64) }]),
     );
     const snapshot = {
       schemaVersion: SNAPSHOT_SCHEMA_VERSION,
